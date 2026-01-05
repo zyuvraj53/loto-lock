@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ESP8266 Servo Lock</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+      text-align: center;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 4px;
+      border: none;
+    }
+
+    input {
+      background: #333;
+      color: #fff;
+    }
+
+    button {
+      background: #4caf50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button.lock {
+      background: #e53935;
+    }
+
+    button.unlock {
+      background: #43a047;
+    }
+
+    #controls {
+      display: none;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h2>Servo Lock</h2>
+
+    <!-- LOGIN -->
+    <div id="login">
+      <input id="username" placeholder="Username" />
+      <input id="password" type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <div class="status" id="loginStatus"></div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div id="controls">
+      <button class="unlock" onclick="setServo(0)">🔓 Unlock</button>
+      <button class="lock" onclick="setServo(90)">🔒 Lock</button>
+      <button onclick="logout()">Logout</button>
+      <div class="status" id="servoStatus"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:3000";
+
+    function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      fetch(API + "/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Invalid credentials");
+        return res.json();
+      })
+      .then(data => {
+        localStorage.setItem("token", data.token);
+        document.getElementById("login").style.display = "none";
+        document.getElementById("controls").style.display = "block";
+      })
+      .catch(err => {
+        document.getElementById("loginStatus").innerText = err.message;
+      });
+    }
+
+    function setServo(angle) {
+      const token = localStorage.getItem("token");
+
+      fetch(API + "/servo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ angle })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Action denied");
+        return res.json();
+      })
+      .then(() => {
+        document.getElementById("servoStatus").innerText =
+          angle === 0 ? "Unlocked" : "Locked";
+      })
+      .catch(err => {
+        document.getElementById("servoStatus").innerText = err.message;
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      document.getElementById("controls").style.display = "none";
+      document.getElementById("login").style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
