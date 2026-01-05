@@ -13,9 +13,9 @@ const cors = require("cors");
 app.use(cors({ origin: "*", methods: ["GET","POST"], allowedHeaders: ["Content-Type","Authorization"] }));
 
 // HEALTH CHECK
-app.get("/", (req, res) => {
-  res.status(200).send("ok");
-});
+// app.get("/", (req, res) => {
+//   res.status(200).send("ok");
+// });
 
 
 // LOGIN
